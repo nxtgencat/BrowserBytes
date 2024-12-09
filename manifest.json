@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Storage and Cookie Manager",
+  "name": "BrowserBytes",
   "version": "1.0",
   "description": "Import and export local storage and cookies with ease",
   "permissions": [
