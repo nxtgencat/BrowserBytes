@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Storage Manager",
+  "version": "1.0",
+  "description": "Import and export local storage and cookies",
+  "permissions": [
+    "activeTab",
+    "cookies",
+    "tabs",
+    "downloads",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
