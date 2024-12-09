@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Storage Manager",
+  "name": "Storage and Cookie Manager",
   "version": "1.0",
-  "description": "Import and export local storage and cookies",
+  "description": "Import and export local storage and cookies with ease",
   "permissions": [
     "activeTab",
     "cookies",
@@ -13,7 +13,17 @@
   "host_permissions": [
     "<all_urls>"
   ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
   }
 }
