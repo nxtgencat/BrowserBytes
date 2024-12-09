@@ -31,13 +31,16 @@ async function exportStorageAndCookies() {
             cookies: cookies
         };
 
+        // Sanitize tab title to create a valid filename
+        const sanitizedTitle = tab.title.replace(/[<>:"/\\|?*]/g, '_').substring(0, 50); // Truncate to 50 characters
+
         // Create and download JSON file
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
 
         chrome.downloads.download({
             url: url,
-            filename: `storage_export_${new Date().toISOString().replace(/:/g, '-')}.json`
+            filename: `browserbytes_${sanitizedTitle}_${new Date().toISOString().replace(/:/g, '-')}.json`
         });
     } catch (error) {
         console.error('Export error:', error);
