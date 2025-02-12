@@ -1,13 +1,36 @@
-document.getElementById('exportBtn').addEventListener('click', exportStorageAndCookies);
-document.getElementById('importBtn').addEventListener('click', triggerFileInput);
-document.getElementById('fileInput').addEventListener('change', importStorageAndCookies);
+// State management
+let currentFormat = 'json';
+let exportData = null;
 
-async function exportStorageAndCookies() {
+// Utility functions
+function showModal(modalId) {
+    document.getElementById(modalId).classList.add('show');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+    if (modalId === 'importModal') {
+        document.getElementById('importData').value = '';
+    }
+}
+
+function updateTabs(modalId, activeFormat) {
+    const tabs = document.querySelectorAll(`#${modalId} .tab`);
+    tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.format === activeFormat);
+    });
+}
+
+function formatData(data, format) {
+    const jsonData = JSON.stringify(data, null, 2);
+    return format === 'json' ? jsonData : btoa(jsonData);
+}
+
+// Export functionality
+async function handleExport() {
     try {
-        // Get the active tab
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-        // Collect local storage
         const [localStorageResult] = await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: () => {
@@ -20,92 +43,120 @@ async function exportStorageAndCookies() {
             }
         });
 
-        // Get cookies for the current domain
-        const cookies = await chrome.cookies.getAll({
-            url: tab.url
-        });
+        const cookies = await chrome.cookies.getAll({ url: tab.url });
 
-        // Prepare export data
-        const exportData = {
+        exportData = {
             localStorage: localStorageResult.result,
             cookies: cookies
         };
 
-        // Sanitize tab title to create a valid filename
-        const sanitizedTitle = tab.title.replace(/[<>:"/\\|?*]/g, '_').substring(0, 50); // Truncate to 50 characters
+        document.getElementById('exportData').value = formatData(exportData, currentFormat);
+        showModal('exportModal');
+    } catch (error) {
+        alert('Error exporting data: ' + error.message);
+    }
+}
 
-        // Create and download JSON file
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+async function downloadData() {
+    try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const sanitizedTitle = tab.title.replace(/[<>:"/\\|?*]/g, '_').substring(0, 50);
+        const content = document.getElementById('exportData').value;
+        const extension = currentFormat === 'json' ? 'json' : 'txt';
+
+        const blob = new Blob([content], {
+            type: currentFormat === 'json' ? 'application/json' : 'text/plain'
+        });
         const url = URL.createObjectURL(blob);
 
-        chrome.downloads.download({
+        await chrome.downloads.download({
             url: url,
-            filename: `browserbytes_${sanitizedTitle}_${new Date().toISOString().replace(/:/g, '-')}.json`
+            filename: `browserbytes_${sanitizedTitle}_${currentFormat}.${extension}`
         });
     } catch (error) {
-        console.error('Export error:', error);
-        alert('Error exporting storage: ' + error.message);
+        alert('Error downloading data: ' + error.message);
     }
 }
 
-function triggerFileInput() {
-    document.getElementById('fileInput').click();
-}
+// Import functionality
+async function handleImport() {
+    const inputData = document.getElementById('importData').value;
+    if (!inputData) {
+        alert('Please paste data to import');
+        return;
+    }
 
-async function importStorageAndCookies(event) {
     try {
-        const file = event.target.files[0];
-        if (!file) return;
+        let parsedData = currentFormat === 'json'
+            ? JSON.parse(inputData)
+            : JSON.parse(atob(inputData));
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const importData = JSON.parse(e.target.result);
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-            // Get the active tab
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: (data) => {
+                localStorage.clear();
+                Object.entries(data).forEach(([key, value]) => {
+                    localStorage.setItem(key, value);
+                });
+            },
+            args: [parsedData.localStorage]
+        });
 
-            // Import local storage
-            await chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: (data) => {
-                    // Clear existing local storage
-                    window.localStorage.clear();
-
-                    // Import new local storage data
-                    Object.entries(data).forEach(([key, value]) => {
-                        window.localStorage.setItem(key, value);
-                    });
-                },
-                args: [importData.localStorage]
+        for (const cookie of parsedData.cookies) {
+            await chrome.cookies.remove({
+                url: tab.url,
+                name: cookie.name
             });
 
-            // Import cookies
-            for (const cookie of importData.cookies) {
-                // Remove existing cookies for this domain
-                await chrome.cookies.remove({
-                    url: tab.url,
-                    name: cookie.name
-                });
+            await chrome.cookies.set({
+                url: tab.url,
+                name: cookie.name,
+                value: cookie.value,
+                domain: cookie.domain,
+                path: cookie.path,
+                secure: cookie.secure,
+                httpOnly: cookie.httpOnly,
+                sameSite: cookie.sameSite,
+                expirationDate: cookie.expirationDate
+            });
+        }
 
-                // Set new cookies
-                await chrome.cookies.set({
-                    url: tab.url,
-                    name: cookie.name,
-                    value: cookie.value,
-                    domain: cookie.domain,
-                    path: cookie.path,
-                    secure: cookie.secure,
-                    httpOnly: cookie.httpOnly,
-                    sameSite: cookie.sameSite,
-                    expirationDate: cookie.expirationDate
-                });
-            }
-
-            alert('Storage and cookies imported successfully!');
-        };
-        reader.readAsText(file);
+        alert('Data imported successfully!');
+        closeModal('importModal');
     } catch (error) {
-        console.error('Import error:', error);
-        alert('Error importing storage: ' + error.message);
+        alert('Error importing data. Please check the format and try again.');
     }
 }
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Main buttons
+    document.getElementById('exportBtn').addEventListener('click', handleExport);
+    document.getElementById('importBtn').addEventListener('click', () => showModal('importModal'));
+    document.getElementById('downloadBtn').addEventListener('click', downloadData);
+    document.getElementById('importConfirmBtn').addEventListener('click', handleImport);
+
+    // Close buttons
+    document.querySelectorAll('[data-close="modal"]').forEach(button => {
+        button.addEventListener('click', () => {
+            const modal = button.closest('.modal');
+            closeModal(modal.id);
+        });
+    });
+
+    // Tab switching
+    document.querySelectorAll('.tab-group').forEach(group => {
+        group.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab')) {
+                currentFormat = e.target.dataset.format;
+                updateTabs(e.target.closest('.modal').id, currentFormat);
+
+                if (exportData && e.target.closest('#exportModal')) {
+                    document.getElementById('exportData').value = formatData(exportData, currentFormat);
+                }
+            }
+        });
+    });
+});
