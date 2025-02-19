@@ -204,10 +204,14 @@ async function handleRetrieveFromCloud() {
 
         alert(`Restored ${Object.keys(parsedData.localStorage).length} localStorage items and ${cookiesRestored} cookies.`);
         closeModal('importModal');
+
+        // Reload the active tab using chrome.tabs.reload
+        chrome.tabs.reload(tab.id);
     } catch (error) {
         alert('Error retrieving data: ' + error.message);
     }
 }
+
 
 // ----- Event Listeners -----
 document.addEventListener('DOMContentLoaded', () => {

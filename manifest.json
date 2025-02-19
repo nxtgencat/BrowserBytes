@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "BrowserBytesz",
+  "name": "BrowserBytes",
   "version": "2.0",
   "description": "Import and export local storage and cookies with ease",
   "permissions": [
