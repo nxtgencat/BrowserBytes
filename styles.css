@@ -112,26 +112,10 @@ body {
 .modal-header {
     padding: 1rem;
     border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 .modal-header h2 {
     font-size: 1.25rem;
-    color: #333;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 1.25rem;
-    color: #aaa;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-.close-btn:hover {
     color: #333;
 }
 
@@ -162,13 +146,17 @@ body {
     border-color: #3b82f6;
 }
 
-/* Modal Footer */
+/* Modal Footer (vertical layout) */
 .modal-footer {
     padding: 1rem;
     border-top: 1px solid #f0f0f0;
     display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
     gap: 0.5rem;
+}
+
+.modal-footer .btn {
+    width: 100%;
 }
 
 /* Passphrase Container */
@@ -181,16 +169,58 @@ body {
     display: none;
 }
 
+/* Increase passphrase font size and padding */
 .passphrase-display {
     background: #f0f0f0;
-    padding: 0.75rem;
+    padding: 1rem;
     border-radius: 6px;
     font-family: monospace;
+    font-size: 1.0rem;
     color: #333;
-    margin: 0.5rem 0;
+    margin-bottom: 0.5rem;
 }
 
 .passphrase-note {
     font-size: 0.8rem;
     color: #888;
+}
+
+/* Spinner inside button */
+.spinner {
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3498db;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Status message container styling */
+.modal-status {
+    margin: 1rem auto;
+    padding: 0.75rem;
+    text-align: center;
+    font-weight: bold;
+    width: 90%;
+    border-radius: 4px;
+}
+
+.modal-status.success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+.modal-status.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
 }
