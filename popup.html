@@ -1,222 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>BrowserBytes</title>
-    <style>
-        :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            width: 360px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: white;
-            margin: 0;
-        }
-
-        .container {
-            padding: 1.5rem;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--gray-800);
-            margin-bottom: 0.25rem;
-        }
-
-        .subtitle {
-            font-size: 0.875rem;
-            color: var(--gray-700);
-        }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .button {
-            padding: 0.75rem 1rem;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-
-        .button-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .button-primary:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .button-secondary {
-            background-color: var(--gray-100);
-            color: var(--gray-800);
-        }
-
-        .button-secondary:hover {
-            background-color: var(--gray-200);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 1rem;
-        }
-
-        .modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .modal-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--gray-800);
-        }
-
-        .close-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.25rem;
-            color: var(--gray-700);
-            padding: 0.25rem 0.5rem;
-        }
-
-        .tab-group {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .tab {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 0.25rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-
-        .tab.active {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .tab:not(.active) {
-            background-color: var(--gray-100);
-            color: var(--gray-700);
-        }
-
-        .textarea {
-            width: 100%;
-            height: 200px;
-            padding: 0.75rem;
-            border: 1px solid var(--gray-200);
-            border-radius: 0.375rem;
-            font-family: monospace;
-            font-size: 0.875rem;
-            resize: vertical;
-            margin-bottom: 1rem;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1 class="title">BrowserBytes</h1>
-        <p class="subtitle">Storage and Cookie Manager</p>
-    </div>
-    <div class="button-group">
-        <button id="exportBtn" class="button button-primary">Export Data</button>
-        <button id="importBtn" class="button button-secondary">Import Data</button>
+<div class="app-container">
+    <header class="app-header">
+        <h1>BrowserBytes</h1>
+        <p>Manage your storage &amp; cookies easily</p>
+    </header>
+    <div class="action-buttons">
+        <button id="exportBtn" class="btn btn-primary">Save Data to Cloud</button>
+        <button id="importBtn" class="btn btn-secondary">Retrieve from Cloud</button>
     </div>
 </div>
 
 <!-- Export Modal -->
 <div id="exportModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Export Data</h2>
-            <button class="close-button" data-close="modal">&times;</button>
+    <div class="modal-dialog">
+        <header class="modal-header">
+            <h2>Save Data to Cloud</h2>
+            <button class="close-btn" data-close="modal">&times;</button>
+        </header>
+        <div class="modal-body">
+            <label for="exportName">Name for this saved data</label>
+            <input type="text" id="exportName" placeholder="My Site Data">
+            <div id="passphraseContainer" class="passphrase-container hidden">
+                <p>Your data has been saved!</p>
+                <div id="generatedPassphrase" class="passphrase-display"></div>
+                <small class="passphrase-note">
+                    Save this passphrase safely – you won't be able to recover your data without it.
+                </small>
+            </div>
         </div>
-        <div class="tab-group">
-            <button class="tab active" data-format="json">JSON</button>
-            <button class="tab" data-format="base64">Base64</button>
-        </div>
-        <textarea id="exportData" class="textarea" readonly></textarea>
-        <div class="modal-footer">
-            <button id="downloadBtn" class="button button-primary">Download</button>
-        </div>
+        <footer class="modal-footer">
+            <button id="saveBtn" class="btn btn-primary">Save to Cloud</button>
+        </footer>
     </div>
 </div>
 
 <!-- Import Modal -->
 <div id="importModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Import Data</h2>
-            <button class="close-button" data-close="modal">&times;</button>
+    <div class="modal-dialog">
+        <header class="modal-header">
+            <h2>Retrieve from Cloud</h2>
+            <button class="close-btn" data-close="modal">&times;</button>
+        </header>
+        <div class="modal-body">
+            <label for="passphraseInput">Enter your passphrase</label>
+            <input type="text" id="passphraseInput" placeholder="correct horse battery staple">
         </div>
-        <div class="tab-group">
-            <button class="tab active" data-format="json">JSON</button>
-            <button class="tab" data-format="base64">Base64</button>
-        </div>
-        <textarea id="importData" class="textarea" placeholder="Paste your data here..."></textarea>
-        <div class="modal-footer">
-            <button class="button button-secondary" data-close="modal">Cancel</button>
-            <button id="importConfirmBtn" class="button button-primary">Import</button>
-        </div>
+        <footer class="modal-footer">
+            <button class="btn btn-secondary" data-close="modal">Cancel</button>
+            <button id="retrieveBtn" class="btn btn-primary">Retrieve Data</button>
+        </footer>
     </div>
 </div>
 
