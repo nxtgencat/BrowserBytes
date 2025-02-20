@@ -12,54 +12,51 @@
         <p>Cloud Storage Manager</p>
     </header>
 
-    <div class="actions">
-        <button id="exportBtn" class="btn btn-primary">Save to Cloud</button>
-        <button id="importBtn" class="btn btn-secondary">Retrieve Data</button>
-    </div>
-</div>
-
-<!-- Export Modal -->
-<div id="exportModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Save to Cloud</h2>
+    <div class="app-container">
+        <!-- Main View -->
+        <div id="mainView" class="view">
+            <div class="actions">
+                <button id="saveBtn" class="btn btn-primary">Save Data</button>
+                <button id="retrieveBtn" class="btn btn-secondary">Retrieve Data</button>
+            </div>
         </div>
-        <div class="modal-body">
+
+        <!-- Save View -->
+        <div id="saveView" class="view" style="display: none;">
             <div class="form-group">
                 <label for="exportName">Save as</label>
                 <input type="text" id="exportName" placeholder="My Browser Data">
             </div>
+
+            <div class="actions">
+                <button id="confirmSaveBtn" class="btn btn-primary">Save to Cloud</button>
+                <button id="cancelSaveBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+
+            <!-- Passphrase Display (initially hidden) -->
             <div id="passphraseContainer" class="form-group" style="display: none;">
                 <label>Your Passphrase</label>
                 <div id="generatedPassphrase" class="passphrase"></div>
                 <p class="passphrase-note">Save this passphrase - you'll need it to recover your data</p>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button id="saveBtn" class="btn btn-primary">Save</button>
-            <button id="cancelExportBtn" class="btn btn-secondary">Cancel</button>
-        </div>
-        <div id="exportStatus" class="status"></div>
-    </div>
-</div>
 
-<!-- Import Modal -->
-<div id="importModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Retrieve Data</h2>
+            <div id="saveStatus" class="status"></div>
         </div>
-        <div class="modal-body">
+
+        <!-- Retrieve View -->
+        <div id="retrieveView" class="view" style="display: none;">
             <div class="form-group">
                 <label for="passphraseInput">Enter Passphrase</label>
                 <input type="text" id="passphraseInput" placeholder="Enter your saved passphrase">
             </div>
+
+            <div class="actions">
+                <button id="confirmRetrieveBtn" class="btn btn-primary">Retrieve Data</button>
+                <button id="cancelRetrieveBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+
+            <div id="retrieveStatus" class="status"></div>
         </div>
-        <div class="modal-footer">
-            <button id="retrieveBtn" class="btn btn-primary">Retrieve</button>
-            <button id="cancelImportBtn" class="btn btn-secondary">Cancel</button>
-        </div>
-        <div id="importStatus" class="status"></div>
     </div>
 </div>
 

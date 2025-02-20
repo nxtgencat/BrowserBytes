@@ -1,40 +1,44 @@
 const POCKETBASE_URL = 'https://wtf.pockethost.io';
 
-// ----- Modal Utility Functions -----
-function showModal(modalId) {
-    document.getElementById(modalId).classList.add('show');
+// ----- View Management -----
+function showView(viewId) {
+    // Hide all views
+    document.querySelectorAll('.view').forEach(view => {
+        view.style.display = 'none';
+    });
+
+    // Show the requested view
+    document.getElementById(viewId).style.display = 'block';
 }
 
-function closeModal(modalId) {
-    const modalEl = document.getElementById(modalId);
-    modalEl.classList.remove('show');
+function resetSaveView() {
+    const exportNameInput = document.getElementById('exportName');
+    exportNameInput.value = '';
+    exportNameInput.disabled = false;
 
-    if (modalId === 'exportModal') {
-        const exportNameInput = document.getElementById('exportName');
-        exportNameInput.value = '';
-        exportNameInput.disabled = false;
-        const saveBtn = document.getElementById('saveBtn');
-        saveBtn.style.display = 'inline-block';
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = 'Save to Cloud';
-        document.getElementById('passphraseContainer').style.display = 'none';
-        const exportStatus = document.getElementById('exportStatus');
-        exportStatus.textContent = '';
-        exportStatus.classList.remove('success', 'error');
-        // Reset cancel button text back to "Cancel"
-        document.getElementById('cancelExportBtn').textContent = 'Cancel';
-    } else if (modalId === 'importModal') {
-        document.getElementById('passphraseInput').value = '';
-        const retrieveBtn = document.getElementById('retrieveBtn');
-        retrieveBtn.style.display = 'inline-block';
-        retrieveBtn.disabled = false;
-        retrieveBtn.innerHTML = 'Retrieve Data';
-        const importStatus = document.getElementById('importStatus');
-        importStatus.textContent = '';
-        importStatus.classList.remove('success', 'error');
-        // Reset cancel button text back to "Cancel"
-        document.getElementById('cancelImportBtn').textContent = 'Cancel';
-    }
+    const confirmSaveBtn = document.getElementById('confirmSaveBtn');
+    confirmSaveBtn.style.display = 'block';
+    confirmSaveBtn.disabled = false;
+    confirmSaveBtn.innerHTML = 'Save to Cloud';
+
+    document.getElementById('passphraseContainer').style.display = 'none';
+
+    const saveStatus = document.getElementById('saveStatus');
+    saveStatus.textContent = '';
+    saveStatus.classList.remove('success', 'error');
+}
+
+function resetRetrieveView() {
+    document.getElementById('passphraseInput').value = '';
+
+    const confirmRetrieveBtn = document.getElementById('confirmRetrieveBtn');
+    confirmRetrieveBtn.style.display = 'block';
+    confirmRetrieveBtn.disabled = false;
+    confirmRetrieveBtn.innerHTML = 'Retrieve Data';
+
+    const retrieveStatus = document.getElementById('retrieveStatus');
+    retrieveStatus.textContent = '';
+    retrieveStatus.classList.remove('success', 'error');
 }
 
 // ----- Passphrase Generation -----
@@ -170,23 +174,22 @@ async function restoreCookies(tabUrl, cookiesData) {
 async function handleSaveToCloud() {
     const exportNameInput = document.getElementById('exportName');
     const name = exportNameInput.value.trim();
-    const saveBtn = document.getElementById('saveBtn');
-    const exportStatus = document.getElementById('exportStatus');
+    const confirmSaveBtn = document.getElementById('confirmSaveBtn');
+    const saveStatus = document.getElementById('saveStatus');
 
-    exportStatus.textContent = '';
-    exportStatus.classList.remove('success', 'error');
+    saveStatus.textContent = '';
+    saveStatus.classList.remove('success', 'error');
 
     if (!name) {
-        exportStatus.textContent = 'Please enter a name for your saved data';
-        exportStatus.classList.add('error');
+        saveStatus.textContent = 'Please enter a name for your saved data';
+        saveStatus.classList.add('error');
         return;
     }
 
     // Disable save button and input
-    saveBtn.disabled = true;
+    confirmSaveBtn.disabled = true;
     exportNameInput.disabled = true;
-    const originalSaveBtnText = saveBtn.innerHTML;
-    saveBtn.innerHTML = `<span class="spinner"></span> Saving...`;
+    confirmSaveBtn.innerHTML = `<span class="spinner"></span> Saving...`;
 
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -199,43 +202,46 @@ async function handleSaveToCloud() {
         const result = await createHavelocRecord(name, exportData);
 
         if (result.success) {
-            // Show the passphrase (with larger display)
+            // Show the passphrase
             document.getElementById('generatedPassphrase').textContent = result.passphrase;
             document.getElementById('passphraseContainer').style.display = 'block';
-            // Hide the save button and update cancel to "Close"
-            saveBtn.style.display = 'none';
-            document.getElementById('cancelExportBtn').textContent = 'Close';
-            exportStatus.textContent = 'Data saved successfully!';
-            exportStatus.classList.add('success');
+
+            // Hide the save button
+            confirmSaveBtn.style.display = 'none';
+
+            // Update cancel button to "Back"
+            document.getElementById('cancelSaveBtn').textContent = 'Back to Menu';
+
+            saveStatus.textContent = 'Data saved successfully!';
+            saveStatus.classList.add('success');
         } else {
             throw new Error(result.error);
         }
     } catch (error) {
-        exportStatus.textContent = 'Error saving data: ' + error.message;
-        exportStatus.classList.add('error');
-        saveBtn.disabled = false;
+        saveStatus.textContent = 'Error saving data: ' + error.message;
+        saveStatus.classList.add('error');
+        confirmSaveBtn.disabled = false;
         exportNameInput.disabled = false;
-        saveBtn.innerHTML = originalSaveBtnText;
+        confirmSaveBtn.innerHTML = 'Save to Cloud';
     }
 }
 
 async function handleRetrieveFromCloud() {
     const passphrase = document.getElementById('passphraseInput').value.trim();
-    const retrieveBtn = document.getElementById('retrieveBtn');
-    const importStatus = document.getElementById('importStatus');
+    const confirmRetrieveBtn = document.getElementById('confirmRetrieveBtn');
+    const retrieveStatus = document.getElementById('retrieveStatus');
 
-    importStatus.textContent = '';
-    importStatus.classList.remove('success', 'error');
+    retrieveStatus.textContent = '';
+    retrieveStatus.classList.remove('success', 'error');
 
     if (!passphrase) {
-        importStatus.textContent = 'Please enter your passphrase';
-        importStatus.classList.add('error');
+        retrieveStatus.textContent = 'Please enter your passphrase';
+        retrieveStatus.classList.add('error');
         return;
     }
 
-    retrieveBtn.disabled = true;
-    const originalRetrieveBtnText = retrieveBtn.innerHTML;
-    retrieveBtn.innerHTML = `<span class="spinner"></span> Retrieving...`;
+    confirmRetrieveBtn.disabled = true;
+    confirmRetrieveBtn.innerHTML = `<span class="spinner"></span> Retrieving...`;
 
     try {
         const record = await getRecordByPassphrase(passphrase);
@@ -245,33 +251,58 @@ async function handleRetrieveFromCloud() {
         await restoreLocalStorage(tab.id, parsedData.localStorage);
         const cookiesRestored = await restoreCookies(tab.url, parsedData.cookies);
 
-        importStatus.textContent = `Restored ${Object.keys(parsedData.localStorage).length} localStorage items and ${cookiesRestored} cookies.`;
-        importStatus.classList.add('success');
+        retrieveStatus.textContent = `Restored ${Object.keys(parsedData.localStorage).length} localStorage items and ${cookiesRestored} cookies.`;
+        retrieveStatus.classList.add('success');
 
-        // Hide the retrieve button and update cancel to "Close"
-        retrieveBtn.style.display = 'none';
-        document.getElementById('cancelImportBtn').textContent = 'Close';
+        // Hide the retrieve button
+        confirmRetrieveBtn.style.display = 'none';
 
-        // Reload the active tab after a short delay (so the user sees the success message)
+        // Update cancel button to "Back"
+        document.getElementById('cancelRetrieveBtn').textContent = 'Back to Menu';
+
+        // Reload the active tab after a short delay
         setTimeout(() => {
             chrome.tabs.reload(tab.id);
         }, 1500);
     } catch (error) {
-        importStatus.textContent = 'Error retrieving data: ' + error.message;
-        importStatus.classList.add('error');
-        retrieveBtn.disabled = false;
-        retrieveBtn.innerHTML = originalRetrieveBtnText;
+        retrieveStatus.textContent = 'Error retrieving data: ' + error.message;
+        retrieveStatus.classList.add('error');
+        confirmRetrieveBtn.disabled = false;
+        confirmRetrieveBtn.innerHTML = 'Retrieve Data';
     }
 }
 
 // ----- Event Listeners -----
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('exportBtn').addEventListener('click', () => showModal('exportModal'));
-    document.getElementById('importBtn').addEventListener('click', () => showModal('importModal'));
-    document.getElementById('saveBtn').addEventListener('click', handleSaveToCloud);
-    document.getElementById('retrieveBtn').addEventListener('click', handleRetrieveFromCloud);
+    // Show initial view
+    showView('mainView');
 
-    // Cancel buttons close their respective modals
-    document.getElementById('cancelExportBtn').addEventListener('click', () => closeModal('exportModal'));
-    document.getElementById('cancelImportBtn').addEventListener('click', () => closeModal('importModal'));
+    // Main view buttons
+    document.getElementById('saveBtn').addEventListener('click', () => {
+        resetSaveView();
+        showView('saveView');
+    });
+
+    document.getElementById('retrieveBtn').addEventListener('click', () => {
+        resetRetrieveView();
+        showView('retrieveView');
+    });
+
+    // Save view buttons
+    document.getElementById('confirmSaveBtn').addEventListener('click', handleSaveToCloud);
+    document.getElementById('cancelSaveBtn').addEventListener('click', () => {
+        if (document.getElementById('cancelSaveBtn').textContent === 'Back to Menu') {
+            resetSaveView();
+        }
+        showView('mainView');
+    });
+
+    // Retrieve view buttons
+    document.getElementById('confirmRetrieveBtn').addEventListener('click', handleRetrieveFromCloud);
+    document.getElementById('cancelRetrieveBtn').addEventListener('click', () => {
+        if (document.getElementById('cancelRetrieveBtn').textContent === 'Back to Menu') {
+            resetRetrieveView();
+        }
+        showView('mainView');
+    });
 });

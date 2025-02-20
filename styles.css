@@ -26,10 +26,12 @@ body {
 
 .container {
     background: var(--surface);
-    border-radius: var(--radius);
     padding: 16px;
-    height: 400px;
+    min-height: 250px; /* Minimum height instead of fixed height */
+    height: auto; /* Allow height to grow with content */
     box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    position: relative; /* For consistent positioning */
 }
 
 .header {
@@ -48,9 +50,20 @@ body {
     color: var(--text-secondary);
 }
 
+.app-container {
+    position: relative;
+}
+
+.view {
+    width: 100%;
+    /* Instead of absolute positioning, we use display:none/block */
+    transition: opacity 0.2s ease;
+}
+
 .actions {
     display: grid;
     gap: 8px;
+    margin-bottom: 16px;
 }
 
 .btn {
@@ -83,53 +96,9 @@ body {
     background: var(--border);
 }
 
-.modal {
-    display: none;
-    position: absolute; /* Change from fixed to absolute */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 16px;
-    z-index: 1000;
-}
-
-.modal.show {
-    display: flex;
-    align-items: flex-start; /* Change from center to flex-start */
-    justify-content: center;
-    overflow-y: auto; /* Add scrolling capability */
-    max-height: 100vh; /* Limit height to viewport */
-}
-
-.modal-content {
-    background: var(--surface);
-    border-radius: var(--radius);
-    width: 100%;
-    max-width: 280px;
-    margin-top: 20px; /* Add some top margin */
-    margin-bottom: 20px; /* Add some bottom margin */
-    box-shadow: var(--shadow);
-}
-
-/* Add this to ensure the body doesn't scroll when modal is open */
-body.modal-open {
-    overflow: hidden;
-}
-
-.modal-header {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-}
-
-.modal-header h2 {
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.modal-body {
-    padding: 16px;
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 .form-group {
@@ -169,13 +138,6 @@ body.modal-open {
 .passphrase-note {
     font-size: 12px;
     color: var(--text-secondary);
-}
-
-.modal-footer {
-    padding: 16px;
-    border-top: 1px solid var(--border);
-    display: grid;
-    gap: 8px;
 }
 
 .status {
