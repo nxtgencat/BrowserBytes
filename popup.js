@@ -2,12 +2,9 @@ const POCKETBASE_URL = 'https://wtf.pockethost.io';
 
 // ----- View Management -----
 function showView(viewId) {
-    // Hide all views
     document.querySelectorAll('.view').forEach(view => {
         view.style.display = 'none';
     });
-
-    // Show the requested view
     document.getElementById(viewId).style.display = 'block';
 }
 
@@ -15,6 +12,9 @@ function resetSaveView() {
     const exportNameInput = document.getElementById('exportName');
     exportNameInput.value = '';
     exportNameInput.disabled = false;
+
+    // Reset encryption key field
+    document.getElementById('encryptionKey').value = '';
 
     const confirmSaveBtn = document.getElementById('confirmSaveBtn');
     confirmSaveBtn.style.display = 'block';
@@ -30,6 +30,8 @@ function resetSaveView() {
 
 function resetRetrieveView() {
     document.getElementById('passphraseInput').value = '';
+    // Reset decryption key field
+    document.getElementById('decryptionKey').value = '';
 
     const confirmRetrieveBtn = document.getElementById('confirmRetrieveBtn');
     confirmRetrieveBtn.style.display = 'block';
@@ -39,6 +41,89 @@ function resetRetrieveView() {
     const retrieveStatus = document.getElementById('retrieveStatus');
     retrieveStatus.textContent = '';
     retrieveStatus.classList.remove('success', 'error');
+}
+
+// ----- Encryption/Decryption Helpers -----
+// Convert ArrayBuffer to Base64
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    bytes.forEach(b => binary += String.fromCharCode(b));
+    return window.btoa(binary);
+}
+
+// Convert Base64 to ArrayBuffer
+function base64ToArrayBuffer(base64) {
+    const binary_string = window.atob(base64);
+    const len = binary_string.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+// Derive a cryptographic key from a password and salt using PBKDF2
+async function deriveKey(password, salt) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        "raw",
+        enc.encode(password),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+    );
+    return crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: salt,
+            iterations: 100000,
+            hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+    );
+}
+
+// Encrypt plaintext using a password. Returns an object containing the salt, IV, and ciphertext (all in Base64).
+async function encryptData(plaintext, password) {
+    const enc = new TextEncoder();
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(password, salt);
+    const ciphertext = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv: iv },
+        key,
+        enc.encode(plaintext)
+    );
+    return {
+        encrypted: true,
+        salt: arrayBufferToBase64(salt),
+        iv: arrayBufferToBase64(iv),
+        data: arrayBufferToBase64(ciphertext)
+    };
+}
+
+// Decrypt data using a password. Expects an object with Base64 encoded salt, iv, and ciphertext.
+async function decryptData(encryptedObj, password) {
+    const { salt, iv, data } = encryptedObj;
+    const saltBuffer = base64ToArrayBuffer(salt);
+    const ivBuffer = base64ToArrayBuffer(iv);
+    const ciphertextBuffer = base64ToArrayBuffer(data);
+    const key = await deriveKey(password, saltBuffer);
+    try {
+        const decryptedBuffer = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: ivBuffer },
+            key,
+            ciphertextBuffer
+        );
+        const dec = new TextDecoder();
+        return dec.decode(decryptedBuffer);
+    } catch (e) {
+        throw new Error("Decryption failed");
+    }
 }
 
 // ----- Passphrase Generation -----
@@ -147,9 +232,7 @@ async function restoreCookies(tabUrl, cookiesData) {
         const cookie = cookiesData[cookieName];
         try {
             await chrome.cookies.remove({ url: tabUrl, name: cookieName });
-        } catch (e) {
-            // Ignore if not found
-        }
+        } catch (e) { }
         try {
             await chrome.cookies.set({
                 url: tabUrl,
@@ -176,6 +259,8 @@ async function handleSaveToCloud() {
     const name = exportNameInput.value.trim();
     const confirmSaveBtn = document.getElementById('confirmSaveBtn');
     const saveStatus = document.getElementById('saveStatus');
+    const encryptionKeyInput = document.getElementById('encryptionKey');
+    const encryptionKey = encryptionKeyInput.value.trim();
 
     saveStatus.textContent = '';
     saveStatus.classList.remove('success', 'error');
@@ -186,7 +271,6 @@ async function handleSaveToCloud() {
         return;
     }
 
-    // Disable save button and input
     confirmSaveBtn.disabled = true;
     exportNameInput.disabled = true;
     confirmSaveBtn.innerHTML = `<span class="spinner"></span> Saving...`;
@@ -198,20 +282,21 @@ async function handleSaveToCloud() {
             extractCookies(tab.url)
         ]);
 
-        const exportData = { localStorage: localStorageData, cookies: cookiesData };
+        let exportData = { localStorage: localStorageData, cookies: cookiesData };
+
+        // If an encryption key is provided, encrypt the export data.
+        if (encryptionKey) {
+            const plaintext = JSON.stringify(exportData);
+            exportData = await encryptData(plaintext, encryptionKey);
+        }
+
         const result = await createHavelocRecord(name, exportData);
 
         if (result.success) {
-            // Show the passphrase
             document.getElementById('generatedPassphrase').textContent = result.passphrase;
             document.getElementById('passphraseContainer').style.display = 'block';
-
-            // Hide the save button
             confirmSaveBtn.style.display = 'none';
-
-            // Update cancel button to "Back"
             document.getElementById('cancelSaveBtn').textContent = 'Back to Menu';
-
             saveStatus.textContent = 'Data saved successfully!';
             saveStatus.classList.add('success');
         } else {
@@ -230,6 +315,7 @@ async function handleRetrieveFromCloud() {
     const passphrase = document.getElementById('passphraseInput').value.trim();
     const confirmRetrieveBtn = document.getElementById('confirmRetrieveBtn');
     const retrieveStatus = document.getElementById('retrieveStatus');
+    const decryptionKeyInput = document.getElementById('decryptionKey');
 
     retrieveStatus.textContent = '';
     retrieveStatus.classList.remove('success', 'error');
@@ -246,21 +332,30 @@ async function handleRetrieveFromCloud() {
     try {
         const record = await getRecordByPassphrase(passphrase);
         const parsedData = typeof record.data === 'string' ? JSON.parse(record.data) : record.data;
+        let exportData;
+
+        // Check if the retrieved data is encrypted.
+        if (parsedData.encrypted) {
+            const decryptionKey = decryptionKeyInput.value.trim();
+            if (!decryptionKey) {
+                throw new Error("Data is encrypted. A decryption key is required to decrypt.");
+            }
+            const decryptedText = await decryptData(parsedData, decryptionKey);
+            exportData = JSON.parse(decryptedText);
+        } else {
+            exportData = parsedData;
+        }
+
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        await restoreLocalStorage(tab.id, exportData.localStorage);
+        const cookiesRestored = await restoreCookies(tab.url, exportData.cookies);
 
-        await restoreLocalStorage(tab.id, parsedData.localStorage);
-        const cookiesRestored = await restoreCookies(tab.url, parsedData.cookies);
-
-        retrieveStatus.textContent = `Restored ${Object.keys(parsedData.localStorage).length} localStorage items and ${cookiesRestored} cookies.`;
+        retrieveStatus.textContent = `Restored ${Object.keys(exportData.localStorage).length} localStorage items and ${cookiesRestored} cookies.`;
         retrieveStatus.classList.add('success');
 
-        // Hide the retrieve button
         confirmRetrieveBtn.style.display = 'none';
-
-        // Update cancel button to "Back"
         document.getElementById('cancelRetrieveBtn').textContent = 'Back to Menu';
 
-        // Reload the active tab after a short delay
         setTimeout(() => {
             chrome.tabs.reload(tab.id);
         }, 1500);
@@ -274,7 +369,6 @@ async function handleRetrieveFromCloud() {
 
 // ----- Event Listeners -----
 document.addEventListener('DOMContentLoaded', () => {
-    // Show initial view
     showView('mainView');
 
     // Main view buttons

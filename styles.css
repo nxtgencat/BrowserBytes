@@ -27,11 +27,11 @@ body {
 .container {
     background: var(--surface);
     padding: 16px;
-    min-height: 250px; /* Minimum height instead of fixed height */
-    height: auto; /* Allow height to grow with content */
+    min-height: 250px;
+    height: auto;
     box-shadow: var(--shadow);
     border-radius: var(--radius);
-    position: relative; /* For consistent positioning */
+    position: relative;
 }
 
 .header {
@@ -56,7 +56,6 @@ body {
 
 .view {
     width: 100%;
-    /* Instead of absolute positioning, we use display:none/block */
     transition: opacity 0.2s ease;
 }
 

@@ -27,7 +27,10 @@
                 <label for="exportName">Save as</label>
                 <input type="text" id="exportName" placeholder="My Browser Data">
             </div>
-
+            <div class="form-group">
+                <label for="encryptionKey">Encryption Key (Optional)</label>
+                <input type="text" id="encryptionKey" placeholder="Enter encryption key">
+            </div>
             <div class="actions">
                 <button id="confirmSaveBtn" class="btn btn-primary">Save to Cloud</button>
                 <button id="cancelSaveBtn" class="btn btn-secondary">Cancel</button>
@@ -49,12 +52,14 @@
                 <label for="passphraseInput">Enter Passphrase</label>
                 <input type="text" id="passphraseInput" placeholder="Enter your saved passphrase">
             </div>
-
+            <div class="form-group">
+                <label for="decryptionKey">Decryption Key (Optional)</label>
+                <input type="text" id="decryptionKey" placeholder="Enter decryption key">
+            </div>
             <div class="actions">
                 <button id="confirmRetrieveBtn" class="btn btn-primary">Retrieve Data</button>
                 <button id="cancelRetrieveBtn" class="btn btn-secondary">Cancel</button>
             </div>
-
             <div id="retrieveStatus" class="status"></div>
         </div>
     </div>
