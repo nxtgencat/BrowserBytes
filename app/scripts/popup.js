@@ -20,11 +20,16 @@ async function handleSaveToCloud() {
 
     try {
         const tab = await DataUtil.getActiveTab();
-        const [localStorageData, cookiesData] = await Promise.all([
+        const [localStorageData, cookiesData, sessionStorageData] = await Promise.all([
             DataUtil.extractLocalStorage(tab.id),
-            DataUtil.extractCookies(tab.url)
+            DataUtil.extractCookies(tab.url),
+            DataUtil.extractSessionStorage(tab.id)
         ]);
-        let exportData = { localStorage: localStorageData, cookies: cookiesData };
+        let exportData = {
+            localStorage: localStorageData,
+            cookies: cookiesData,
+            sessionStorage: sessionStorageData
+        };
 
         if (encryptionKey) {
             exportData = await CryptoUtil.encryptData(JSON.stringify(exportData), encryptionKey);
@@ -78,8 +83,12 @@ async function handleRetrieveFromCloud() {
         const tab = await DataUtil.getActiveTab();
         await DataUtil.restoreLocalStorage(tab.id, exportData.localStorage);
         const cookiesRestored = await DataUtil.restoreCookies(tab.url, exportData.cookies);
+        await DataUtil.restoreSessionStorage(tab.id, exportData.sessionStorage);
+        const sessionStorageRestored = Object.keys(exportData.sessionStorage || {}).length;
 
-        ViewManager.updateStatus(statusEl, `Restored ${Object.keys(exportData.localStorage).length} localStorage items and ${cookiesRestored} cookies.`, 'success');
+        ViewManager.updateStatus(statusEl,
+            `Restored ${Object.keys(exportData.localStorage).length} localStorage items, ${cookiesRestored} cookies, and ${sessionStorageRestored} sessionStorage items.`,
+            'success');
         confirmBtn.style.display = 'none';
         document.getElementById('cancelRetrieveBtn').textContent = 'Back to Menu';
 

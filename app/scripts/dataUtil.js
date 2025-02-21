@@ -17,6 +17,20 @@ export const DataUtil = {
         });
         return result;
     },
+    async extractSessionStorage(tabId) {
+        const [{ result }] = await chrome.scripting.executeScript({
+            target: { tabId },
+            func: () => {
+                const data = {};
+                for (let i = 0; i < window.sessionStorage.length; i++) {
+                    const key = window.sessionStorage.key(i);
+                    data[key] = window.sessionStorage.getItem(key);
+                }
+                return data;
+            }
+        });
+        return result;
+    },
     async extractCookies(url) {
         const cookiesArray = await chrome.cookies.getAll({ url });
         const cookiesData = {};
@@ -33,11 +47,21 @@ export const DataUtil = {
             args: [data]
         });
     },
+    async restoreSessionStorage(tabId, data) {
+        await chrome.scripting.executeScript({
+            target: { tabId },
+            func: sessionData => {
+                sessionStorage.clear();
+                Object.keys(sessionData).forEach(key => sessionStorage.setItem(key, sessionData[key]));
+            },
+            args: [data]
+        });
+    },
     async restoreCookies(url, cookiesData) {
         let restored = 0;
         for (const cookieName in cookiesData) {
             const cookie = cookiesData[cookieName];
-            try { await chrome.cookies.remove({ url, name: cookieName }); } catch (e) {}
+            try { await chrome.cookies.remove({ url, name: cookieName }); } catch (e) { }
             try {
                 await chrome.cookies.set({
                     url,
