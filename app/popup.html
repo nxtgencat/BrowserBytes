@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>BrowserBytes</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/styles.css">
 </head>
 <body>
 <div class="container">
@@ -35,14 +35,11 @@
                 <button id="confirmSaveBtn" class="btn btn-primary">Save to Cloud</button>
                 <button id="cancelSaveBtn" class="btn btn-secondary">Cancel</button>
             </div>
-
-            <!-- Passphrase Display (initially hidden) -->
             <div id="passphraseContainer" class="form-group" style="display: none;">
                 <label>Your Passphrase</label>
                 <div id="generatedPassphrase" class="passphrase"></div>
                 <p class="passphrase-note">Save this passphrase - you'll need it to recover your data</p>
             </div>
-
             <div id="saveStatus" class="status"></div>
         </div>
 
@@ -65,6 +62,7 @@
     </div>
 </div>
 
-<script src="popup.js"></script>
+<!-- Main module -->
+<script type="module" src="scripts/popup.js"></script>
 </body>
 </html>

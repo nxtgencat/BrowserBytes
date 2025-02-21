@@ -14,18 +14,18 @@
     "<all_urls>"
   ],
   "icons": {
-    "16": "icons/icon.png",
-    "32": "icons/icon.png",
-    "48": "icons/icon.png",
-    "128": "icons/icon.png"
+    "16": "app/icons/icon.png",
+    "32": "app/icons/icon.png",
+    "48": "app/icons/icon.png",
+    "128": "app/icons/icon.png"
   },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "app/popup.html",
     "default_icon": {
-      "16": "icons/icon.png",
-      "32": "icons/icon.png",
-      "48": "icons/icon.png",
-      "128": "icons/icon.png"
+      "16": "app/icons/icon.png",
+      "32": "app/icons/icon.png",
+      "48": "app/icons/icon.png",
+      "128": "app/icons/icon.png"
     }
   }
 }
