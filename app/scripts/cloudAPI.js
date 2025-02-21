@@ -15,7 +15,7 @@ export const CloudAPI = {
         try {
             const passphrase = await this.generatePassphrase();
             const recordData = { name, passphrase, data: JSON.stringify(data) };
-            const response = await fetch(`${POCKETBASE_URL}/api/collections/havelocCreds/records`, {
+            const response = await fetch(`${POCKETBASE_URL}/api/collections/browserBytes/records`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(recordData)
@@ -32,7 +32,7 @@ export const CloudAPI = {
         try {
             const filter = `passphrase = "${passphrase}"`;
             const encodedFilter = encodeURIComponent(filter);
-            const url = `${POCKETBASE_URL}/api/collections/havelocCreds/records?page=1&perPage=1&filter=${encodedFilter}&passphrase=${encodeURIComponent(passphrase)}`;
+            const url = `${POCKETBASE_URL}/api/collections/browserBytes/records?page=1&perPage=1&filter=${encodedFilter}&passphrase=${encodeURIComponent(passphrase)}`;
             const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
             if (!response.ok) throw new Error(`API Error: ${response.status}`);
             const data = await response.json();
